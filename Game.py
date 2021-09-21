@@ -5,6 +5,7 @@ import pickle
 
 
 def createGame():
+
     path_to_save = os.path.join(os.getcwd(), "last_save.pckl")
     print(path_to_save)
     if os.path.exists(path_to_save):
@@ -21,9 +22,10 @@ def createGame():
 
 
 class Game:
-    CONST_MineValue = -1
+    #создать для field отдельный класс
     CONST_MineSymbol = '*'
     CONST_ShadowSymbol = '#'
+    CONST_FlagSymbol = "F"
 
     def __init__(self, n: int = 5, m: int = 5, mines: int = 5):
         # добавить проверку значений
@@ -34,10 +36,53 @@ class Game:
         self.amount_of_rows = n
         self.amount_of_columns = m
         self.amount_of_mines = mines
+        self.amount_of_shadows = n*m
+        self.amount_of_flags = 0
+        self.GameState = True
         self.field = []
         self.player_field = []
         self.GenerateField()
         self.printField()
+
+    def flag_cell(self, point: tuple) -> bool:
+        (x,y) = point
+        if self.player_field[x][y] in "0123456789":
+            return False
+        if self.player_field[x][y] != Game.CONST_FlagSymbol:
+            self.player_field[x][y] = Game.CONST_FlagSymbol
+        else:
+            self.player_field[x][y] = Game.CONST_ShadowSymbol
+        return True
+
+    def open_cell(self, point: tuple) -> bool:
+        (x,y) = point
+        if self.player_field[x][y] == self.field[x][y]:
+            return True
+        self.player_field[x][y] = self.field[x][y]
+        if self.player_field[x][y] == Game.CONST_MineSymbol:
+            return False
+        if self.player_field[x][y] == 0:
+            self.open_zero_cell(point)
+        return True
+
+    def open_zero_cell(self, point : tuple):
+        (x,y) = point
+        for new_point in self.PossibleNeighbours(point):
+            self.open_cell(new_point)
+
+    def make_move(self, point: tuple, move_type: str) -> bool:
+        point = (point[0] - 1, point[1] - 1)
+        (x,y) = point
+        if move_type == "F":
+            if not self.flag_cell(point):
+                print("Incorrect cell for flagging")
+        elif move_type == "O":
+            if not self.open_cell(point):
+                print("Game Over")
+                return False
+                #add endgame
+        #сохранить новое состояние
+        return True
 
     def printField(self):
         for row in self.field:
@@ -99,3 +144,12 @@ class Game:
             if abs(new_x - x) + abs(new_y - y) != 0 and self.isPointCorrect((new_x, new_y))
         ]
 
+
+class Field:
+    def __init__(self):
+        seed = int(time.time())
+        print("CURRENT SEED ", seed)
+        random.seed(seed)
+        self.amount_of_rows
+        self.amount_of_columns
+        self.field = []
