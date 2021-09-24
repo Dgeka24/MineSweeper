@@ -29,7 +29,7 @@ def Decypher(path: str):
 def LoadGame(game_name: str):
     path_to_load = os.path.join(os.getcwd(), game_name + "_save.pckl")
     if os.path.exists(path_to_load):
-        print("Game was loaded")
+        print("Игра загружена")
         Decypher(path_to_load)
         file = open(path_to_load, 'rb')
         game = pickle.load(file)
@@ -37,44 +37,51 @@ def LoadGame(game_name: str):
         Cypher(path_to_load)
         return game
     else:
-        print("No saved games: ", game_name)
+        print("Нет сохранённой игры с названием: ", game_name)
         return None
+
+
+def NewGame(rows: int = 5, columns:int = 5, mines: int = 2, game_name: str = "last"):
+    path_to_save = os.path.join(os.getcwd(), game_name + "_save.pckl")
+    if os.path.exists(path_to_save):
+        os.remove(path_to_save)
+    game = Game(rows, columns, mines, game_name)
+    file = open(game_name + "_save.pckl", "wb")
+    pickle.dump(game, file)
+    file.close()
+    Cypher(game_name + "_save.pckl")
+    print("Создана новая игра")
+    return game
 
 
 def createGame(game_name: str):
     path_to_save = os.path.join(os.getcwd(), game_name + "_save.pckl")
     print(path_to_save)
     if os.path.exists(path_to_save):
-        print("Game was loaded")
+        print("Игра загружена")
         file = open(path_to_save, 'rb')
         Decypher(path_to_save)
         game = pickle.load(file)
         file.close()
         Cypher(path_to_save)
     else:
-        print("No saved games", game_name)
+        print("Нет сохранённой игры с названием: ", game_name)
         game = Game(game_name = game_name)
         file = open(game_name + "_save.pckl", "wb")
         pickle.dump(game, file)
         file.close()
         Cypher(game_name + "_save.pckl")
-        print("New game was created")
+        print("Создана новая игра")
     return game
 
 
 class Game:
-    # создать для field отдельный класс
     CONST_MineSymbol = '*'
     CONST_ShadowSymbol = '#'
     CONST_FlagSymbol = "F"
 
     def __init__(self, n: int = 5, m: int = 5, mines: int = 5, game_name : str = "last"):
-        # добавить проверку значений
-        # game_name чтобы можно было сохранить
-        # random.seed(0)
-
         seed = int(time.time())
-        print("CURRENT SEED ", seed)
         random.seed(seed)
         self.amount_of_rows = n
         self.amount_of_columns = m
@@ -106,8 +113,12 @@ class Game:
             return False
         if self.player_field[x][y] != Game.CONST_FlagSymbol:
             self.player_field[x][y] = Game.CONST_FlagSymbol
+            self.amount_of_flags += 1
+            self.amount_of_shadows -= 1
         else:
             self.player_field[x][y] = Game.CONST_ShadowSymbol
+            self.amount_of_flags -= 1
+            self.amount_of_shadows += 1
         return True
 
     def open_cell(self, point: tuple) -> bool:
@@ -115,6 +126,7 @@ class Game:
         if self.player_field[x][y] == self.field[x][y]:
             return True
         self.player_field[x][y] = self.field[x][y]
+        self.amount_of_shadows -= 1
         if self.player_field[x][y] == Game.CONST_MineSymbol:
             return False
         if self.player_field[x][y] == 0:
@@ -127,25 +139,25 @@ class Game:
 
     def make_move(self, point: tuple, move_type: str) -> bool:
         point = (point[0] - 1, point[1] - 1)
-        if move_type == "F":
+        if move_type == "Flag":
             if not self.flag_cell(point):
                 print("Incorrect cell for flagging")
-        elif move_type == "O":
+        elif move_type == "Open":
             if not self.open_cell(point):
                 print("Game Over")
                 self.GameState = False
                 self.game_save()
                 return False
+        if self.GameWin():
+            self.GameState = False
+            print("Поздравляю!!! Вы победили")
         self.game_save()
         return True
 
-    def printField(self):
-        for row in self.field:
-            for cell in row:
-                print(cell, end="")
-            print()
+    def GameWin(self) -> bool:
+        return self.amount_of_shadows == 0 and self.amount_of_flags == self.amount_of_mines
 
-        print()
+    def printField(self):
         for row in self.player_field:
             for cell in row:
                 print(cell, end="")
@@ -197,4 +209,3 @@ class Game:
             for new_x in range(x - 1, x + 2) for new_y in range(y-1, y+2)
             if abs(new_x - x) + abs(new_y - y) != 0 and self.isPointCorrect((new_x, new_y))
         ]
-
