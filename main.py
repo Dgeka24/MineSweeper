@@ -5,10 +5,17 @@ import Game
 
 
 
+
 if __name__ == '__main__':
 
+    print("Создать новую игру или загрузить старую? [new/load] [name] (латинские буквы и цифры без пробелов)")
 
-    game = Game.createGame()
+
+
+    game = Game.createGame("new_game1")
+    #game = Game.loadGame(game_name = "new_game1")
+    if game == None:
+        exit()
     GameState = True
     while GameState:
         game.printField()

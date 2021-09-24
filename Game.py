@@ -4,48 +4,104 @@ import os
 import pickle
 
 
-def createGame():
+def Cypher(path: str):
+    file = open(path, 'r+b')
+    data = file.read()
+    file.seek(0)
+    for x in data:
+        x = (x+3) % 256
+        file.write(x.to_bytes(1, 'big'))
+    file.close()
 
-    path_to_save = os.path.join(os.getcwd(), "last_save.pckl")
+
+
+def Decypher(path: str):
+    file = open(path, 'r+b')
+    data = file.read()
+    file.seek(0)
+    for x in data:
+        x = (x - 3) % 256
+        file.write(x.to_bytes(1, 'big'))
+    file.close()
+
+
+
+def LoadGame(game_name: str):
+    path_to_load = os.path.join(os.getcwd(), game_name + "_save.pckl")
+    if os.path.exists(path_to_load):
+        print("Game was loaded")
+        Decypher(path_to_load)
+        file = open(path_to_load, 'rb')
+        game = pickle.load(file)
+        file.close()
+        Cypher(path_to_load)
+        return game
+    else:
+        print("No saved games: ", game_name)
+        return None
+
+
+def createGame(game_name: str):
+    path_to_save = os.path.join(os.getcwd(), game_name + "_save.pckl")
     print(path_to_save)
     if os.path.exists(path_to_save):
         print("Game was loaded")
         file = open(path_to_save, 'rb')
+        Decypher(path_to_save)
         game = pickle.load(file)
+        file.close()
+        Cypher(path_to_save)
     else:
-        print("No saved games")
-        game = Game.Game()
-        file = open("last_save.pckl", "wb")
+        print("No saved games", game_name)
+        game = Game(game_name = game_name)
+        file = open(game_name + "_save.pckl", "wb")
         pickle.dump(game, file)
+        file.close()
+        Cypher(game_name + "_save.pckl")
         print("New game was created")
     return game
 
 
 class Game:
-    #создать для field отдельный класс
+    # создать для field отдельный класс
     CONST_MineSymbol = '*'
     CONST_ShadowSymbol = '#'
     CONST_FlagSymbol = "F"
 
-    def __init__(self, n: int = 5, m: int = 5, mines: int = 5):
+    def __init__(self, n: int = 5, m: int = 5, mines: int = 5, game_name : str = "last"):
         # добавить проверку значений
-        #random.seed(0)
+        # game_name чтобы можно было сохранить
+        # random.seed(0)
+
         seed = int(time.time())
         print("CURRENT SEED ", seed)
         random.seed(seed)
         self.amount_of_rows = n
         self.amount_of_columns = m
         self.amount_of_mines = mines
+        self.field = []
+
+        self.amount_of_rows = n
+        self.amount_of_columns = m
         self.amount_of_shadows = n*m
         self.amount_of_flags = 0
         self.GameState = True
-        self.field = []
+        self.game_name = game_name
         self.player_field = []
         self.GenerateField()
         self.printField()
 
+
+    def game_save(self):
+        path_to_save = os.path.join(os.getcwd(), self.game_name + "_save.pckl")
+        file = open(path_to_save, 'wb')
+        pickle.dump(self, file)
+        file.close()
+        Cypher(path_to_save)
+
+
     def flag_cell(self, point: tuple) -> bool:
-        (x,y) = point
+        (x, y) = point
         if self.player_field[x][y] in "0123456789":
             return False
         if self.player_field[x][y] != Game.CONST_FlagSymbol:
@@ -55,7 +111,7 @@ class Game:
         return True
 
     def open_cell(self, point: tuple) -> bool:
-        (x,y) = point
+        (x, y) = point
         if self.player_field[x][y] == self.field[x][y]:
             return True
         self.player_field[x][y] = self.field[x][y]
@@ -65,23 +121,22 @@ class Game:
             self.open_zero_cell(point)
         return True
 
-    def open_zero_cell(self, point : tuple):
-        (x,y) = point
+    def open_zero_cell(self, point: tuple):
         for new_point in self.PossibleNeighbours(point):
             self.open_cell(new_point)
 
     def make_move(self, point: tuple, move_type: str) -> bool:
         point = (point[0] - 1, point[1] - 1)
-        (x,y) = point
         if move_type == "F":
             if not self.flag_cell(point):
                 print("Incorrect cell for flagging")
         elif move_type == "O":
             if not self.open_cell(point):
                 print("Game Over")
+                self.GameState = False
+                self.game_save()
                 return False
-                #add endgame
-        #сохранить новое состояние
+        self.game_save()
         return True
 
     def printField(self):
@@ -110,13 +165,13 @@ class Game:
             (x, y) = (random.sample(free_poses, k=1))[0]
             help_field[x][y] -= 1
             if help_field[x][y] < 0:
-                free_poses.remove((x,y))
+                free_poses.remove((x, y))
                 amount_of_mines += 1
                 help_field[x][y] -= 10000
                 self.field[x][y] = Game.CONST_MineSymbol
                 for (i, j) in self.PossibleNeighbours((x, y)):
                     help_field[i][j] += 1
-        for (x,y) in free_poses:
+        for (x, y) in free_poses:
             self.field[x][y] = self.countMines((x, y))
 
     def countMines(self, point: tuple):
@@ -134,9 +189,8 @@ class Game:
             return False
         return True
 
+
     def PossibleNeighbours(self, point: tuple) -> list:
-        n = self.amount_of_rows
-        m = self.amount_of_columns
         (x, y) = point
         return [
             (new_x, new_y)
@@ -144,12 +198,3 @@ class Game:
             if abs(new_x - x) + abs(new_y - y) != 0 and self.isPointCorrect((new_x, new_y))
         ]
 
-
-class Field:
-    def __init__(self):
-        seed = int(time.time())
-        print("CURRENT SEED ", seed)
-        random.seed(seed)
-        self.amount_of_rows
-        self.amount_of_columns
-        self.field = []
