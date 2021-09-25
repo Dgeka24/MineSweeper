@@ -14,7 +14,6 @@ def Cypher(path: str):
     file.close()
 
 
-
 def Decypher(path: str):
     file = open(path, 'r+b')
     data = file.read()
@@ -23,7 +22,6 @@ def Decypher(path: str):
         x = (x - 3) % 256
         file.write(x.to_bytes(1, 'big'))
     file.close()
-
 
 
 def LoadGame(game_name: str):
@@ -88,7 +86,6 @@ class Game:
         self.amount_of_columns = m
         self.amount_of_mines = mines
         self.field = []
-
         self.amount_of_rows = n
         self.amount_of_columns = m
         self.amount_of_shadows = n*m
@@ -99,14 +96,12 @@ class Game:
         self.GenerateField()
         self.printField()
 
-
     def game_save(self):
         path_to_save = os.path.join(os.getcwd(), self.game_name + "_save.pckl")
         file = open(path_to_save, 'wb')
         pickle.dump(self, file)
         file.close()
         Cypher(path_to_save)
-
 
     def flag_cell(self, point: tuple) -> bool:
         (x, y) = point
@@ -143,6 +138,7 @@ class Game:
         if move_type == "Flag":
             if not self.flag_cell(point):
                 print("Некорректная клетка для флага")
+            self.game_save()
         elif move_type == "Open":
             if not self.open_cell(point):
                 print("Вы проиграли :(")
@@ -173,7 +169,6 @@ class Game:
         free_poses = set([(i, j) for j in range(m) for i in range(n)])
         amount_of_mines = 0
         help_field = [[0 for j in range(m)] for i in range(n)]
-
         while amount_of_mines < mines:
             (x, y) = (random.sample(free_poses, k=1))[0]
             help_field[x][y] -= 1
@@ -201,7 +196,6 @@ class Game:
         if x < 0 or y < 0 or x >= n or y >= m:
             return False
         return True
-
 
     def PossibleNeighbours(self, point: tuple) -> list:
         (x, y) = point

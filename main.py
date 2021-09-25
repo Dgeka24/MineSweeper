@@ -55,9 +55,9 @@ def move(game: Game.Game):
     point = (None, None)
     move_type = None
     while point[0] is None:
-        print("Сделайте ход! Координаты и тип хода [int] [int] [Flag/Open]")
+        print("Сделайте ход! Координаты и тип хода [int] [int] [Flag/Open/Recommend/Solve]")
         command = list(filter(None, input().split(' ')))
-        if len(command) == 3 and command[0].isdigit() and command[1].isdigit() and command[2] in ["Flag", "Open"]:
+        if len(command) == 3 and command[0].isdigit() and command[1].isdigit() and command[2] in ["Flag", "Open", "Recommend", "Solve"]:
             point = (int(command[0]), int(command[1]))
             move_type = command[2]
             if not game.isPointCorrect((point[0]-1, point[1]-1)):
@@ -66,7 +66,27 @@ def move(game: Game.Game):
                 print("Некорректный ход")
         else:
             print("Некорректный ход")
-    game.make_move(point, move_type)
+    if move_type in ["Flag", "Open"]:
+        game.make_move(point, move_type)
+    elif move_type == "Recommend":
+        move = Solver.RecommendMove(game.player_field)
+        move = ((move[0][0]+1, move[0][1]+1), move[1])
+        if not (move is None):
+            print("Рекомендуемый ход: ", move)
+        else:
+            print("Нет рекомендуемого хода")
+    else:
+        while game.GameState:
+            move = Solver.RecommendMove(game.player_field)
+            if move is None:
+                for i in range(game.amount_of_rows):
+                    for j in range(game.amount_of_columns):
+                        if game.player_field[i][j] == game.CONST_FlagSymbol:
+                            game.make_move((i+1,j+1), "Flag")
+            else:
+                move = ((move[0][0] + 1, move[0][1] + 1), move[1])
+                print("Ход ", move)
+                game.make_move(move[0], move[1])
 
 
 if __name__ == '__main__':
@@ -76,5 +96,6 @@ if __name__ == '__main__':
     while game.GameState:
         game.printField()
         move(game)
+
     game.printField()
     print("Игра завершена")
