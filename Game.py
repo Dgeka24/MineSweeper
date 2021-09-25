@@ -79,6 +79,7 @@ class Game:
     CONST_MineSymbol = '*'
     CONST_ShadowSymbol = '#'
     CONST_FlagSymbol = "F"
+    CONST_NUMBERS_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     def __init__(self, n: int = 5, m: int = 5, mines: int = 5, game_name : str = "last"):
         seed = int(time.time())
@@ -109,7 +110,7 @@ class Game:
 
     def flag_cell(self, point: tuple) -> bool:
         (x, y) = point
-        if self.player_field[x][y] in "0123456789":
+        if self.player_field[x][y] in Game.CONST_NUMBERS_LIST:
             return False
         if self.player_field[x][y] != Game.CONST_FlagSymbol:
             self.player_field[x][y] = Game.CONST_FlagSymbol
@@ -141,10 +142,10 @@ class Game:
         point = (point[0] - 1, point[1] - 1)
         if move_type == "Flag":
             if not self.flag_cell(point):
-                print("Incorrect cell for flagging")
+                print("Некорректная клетка для флага")
         elif move_type == "Open":
             if not self.open_cell(point):
-                print("Game Over")
+                print("Вы проиграли :(")
                 self.GameState = False
                 self.game_save()
                 return False

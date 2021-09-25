@@ -1,5 +1,5 @@
 import Game
-
+import Solver
 
 def CheckName(name: str) -> bool:
     if len(name) > 10:
