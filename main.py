@@ -57,7 +57,10 @@ def move(game: Game.Game):
     while point[0] is None:
         print("Сделайте ход! Координаты и тип хода [int] [int] [Flag/Open/Recommend/Solve]")
         command = list(filter(None, input().split(' ')))
-        if len(command) == 3 and command[0].isdigit() and command[1].isdigit() and command[2] in ["Flag", "Open", "Recommend", "Solve"]:
+        if len(command) == 1 and command[0] in ["Recommend", "Solve"]:
+            point = (1, 1)
+            move_type = command[0]
+        elif len(command) == 3 and command[0].isdigit() and command[1].isdigit() and command[2] in ["Flag", "Open", "Recommend", "Solve"]:
             point = (int(command[0]), int(command[1]))
             move_type = command[2]
             if not game.isPointCorrect((point[0]-1, point[1]-1)):

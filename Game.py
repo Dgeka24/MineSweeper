@@ -94,7 +94,6 @@ class Game:
         self.game_name = game_name
         self.player_field = []
         self.GenerateField()
-        self.printField()
 
     def game_save(self):
         path_to_save = os.path.join(os.getcwd(), self.game_name + "_save.pckl")
